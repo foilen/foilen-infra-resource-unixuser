@@ -16,18 +16,18 @@ import java.util.stream.Collectors;
 import com.foilen.infra.plugin.v1.core.exception.ProblemException;
 import com.foilen.infra.plugin.v1.core.service.IPResourceService;
 import com.foilen.infra.resource.unixuser.UnixUser;
-import com.foilen.smalltools.tools.SearchingAvailabilityIntTools;
+import com.foilen.smalltools.tools.SearchingAvailabilityLongTools;
 
 public class UnixUserAvailableIdHelper {
 
-    private static SearchingAvailabilityIntTools cachedSearchingAvailability;
+    private static SearchingAvailabilityLongTools cachedSearchingAvailability;
 
-    public static int getNextAvailableId() {
+    public static long getNextAvailableId() {
         if (cachedSearchingAvailability == null) {
             throw new ProblemException("UnixUserAvailableIdHelper has not been initialised");
         }
 
-        Optional<Integer> next = cachedSearchingAvailability.getNext();
+        Optional<Long> next = cachedSearchingAvailability.getNext();
         if (!next.isPresent()) {
             throw new ProblemException("There is no more unix user id available");
         }
@@ -35,18 +35,18 @@ public class UnixUserAvailableIdHelper {
     }
 
     public static void init(IPResourceService resourceService) {
-        cachedSearchingAvailability = new SearchingAvailabilityIntTools(2000, 60000, 100, //
+        cachedSearchingAvailability = new SearchingAvailabilityLongTools(70000, Long.MAX_VALUE, 1000, //
                 (from, to) -> {
-                    int range = to - from + 1;
+                    long range = to - from + 1;
                     List<UnixUser> unixUsers = resourceService.resourceFindAll(resourceService.createResourceQuery(UnixUser.class) //
                             .propertyGreaterAndEquals(UnixUser.PROPERTY_ID, from) //
                             .propertyLesserAndEquals(UnixUser.PROPERTY_ID, to)).stream() //
-                            .sorted((a, b) -> Integer.compare(a.getId(), b.getId())) //
+                            .sorted((a, b) -> Long.compare(a.getId(), b.getId())) //
                             .collect(Collectors.toList());
 
                     // There is one id available
                     if (range != unixUsers.size()) {
-                        int foundId = from;
+                        long foundId = from;
                         for (UnixUser unixUser : unixUsers) {
                             if (foundId != unixUser.getId()) {
                                 break;

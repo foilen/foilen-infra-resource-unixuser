@@ -2,3 +2,13 @@
 .gradle/
 build/
 bin/
+
+# Eclipse
+.classpath
+.pydevproject
+.project
+.settings/
+.springBeans
+
+# Project specific
+_*

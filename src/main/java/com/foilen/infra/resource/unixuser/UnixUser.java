@@ -33,7 +33,7 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
     public static final String PROPERTY_SHELL = "shell";
     public static final String PROPERTY_HASHED_PASSWORD = "hashedPassword";
 
-    private Integer id;
+    private Long id;
     private String name;
     private String homeFolder;
     private String shell = "/bin/bash";
@@ -42,7 +42,7 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
     public UnixUser() {
     }
 
-    public UnixUser(Integer id, String name, String homeFolder, String shell, String hashedPassword) {
+    public UnixUser(Long id, String name, String homeFolder, String shell, String hashedPassword) {
         this.id = id;
         this.name = name;
         this.homeFolder = homeFolder;
@@ -65,7 +65,7 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
         return homeFolder;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
@@ -100,7 +100,7 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
         this.homeFolder = homeFolder;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
