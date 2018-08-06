@@ -23,9 +23,12 @@ import com.foilen.infra.plugin.v1.core.visual.PageDefinition;
 import com.foilen.infra.plugin.v1.core.visual.editor.ResourceEditor;
 import com.foilen.infra.plugin.v1.core.visual.helper.CommonFormatting;
 import com.foilen.infra.plugin.v1.core.visual.helper.CommonPageItem;
+import com.foilen.infra.plugin.v1.core.visual.helper.CommonResourceLink;
 import com.foilen.infra.plugin.v1.core.visual.helper.CommonValidation;
 import com.foilen.infra.plugin.v1.core.visual.pageItem.LabelPageItem;
 import com.foilen.infra.plugin.v1.core.visual.pageItem.field.InputTextFieldPageItem;
+import com.foilen.infra.plugin.v1.model.resource.LinkTypeConstants;
+import com.foilen.infra.resource.machine.Machine;
 import com.foilen.infra.resource.unixuser.helper.UnixUserAvailableIdHelper;
 import com.foilen.smalltools.tools.CharsetTools;
 import com.foilen.smalltools.tuple.Tuple2;
@@ -38,6 +41,8 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
     public static final String FIELD_PASSWORD_CONF = "passwordConf";
     public static final String FIELD_PASSWORD = "password";
     public static final String CLEAR_PASSWORD_CHAR = "*";
+
+    public static final String LINK_INSTALLED_ON = "machines";
 
     @Override
     public void fillResource(CommonServicesContext servicesCtx, ChangesContext changesContext, Map<String, String> validFormValues, UnixUser resource) {
@@ -62,6 +67,9 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
         } else if (!Strings.isNullOrEmpty(password)) {
             resource.setHashedPassword(Sha2Crypt.sha512Crypt(password.getBytes(CharsetTools.UTF_8)));
         }
+
+        // Update links
+        CommonResourceLink.fillResourcesLink(servicesCtx, resource, LinkTypeConstants.INSTALLED_ON, Machine.class, LINK_INSTALLED_ON, validFormValues, changesContext);
 
     }
 
@@ -94,6 +102,8 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
         if (resource != null) {
             namePageItem.setFieldValue(resource.getName());
         }
+
+        CommonResourceLink.addResourcesPageItem(servicesCtx, pageDefinition, resource, LinkTypeConstants.INSTALLED_ON, Machine.class, "UnixUserEditor.machines", LINK_INSTALLED_ON);
 
         return pageDefinition;
 
