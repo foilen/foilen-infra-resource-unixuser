@@ -27,19 +27,32 @@ import com.google.common.collect.ComparisonChain;
  */
 public class UnixUser extends AbstractIPResource implements Comparable<UnixUser> {
 
+    public static final String RESOURCE_TYPE = "Unix User";
+
     public static final String PROPERTY_ID = "id";
     public static final String PROPERTY_NAME = "name";
     public static final String PROPERTY_HOME_FOLDER = "homeFolder";
     public static final String PROPERTY_SHELL = "shell";
     public static final String PROPERTY_HASHED_PASSWORD = "hashedPassword";
+    public static final String PROPERTY_PASSWORD = "password";
+    public static final String PROPERTY_KEEP_CLEAR_PASSWORD = "keepClearPassword";
 
     private Long id;
     private String name;
     private String homeFolder;
     private String shell = "/bin/bash";
+    private boolean keepClearPassword;
+    private String password;
     private String hashedPassword;
 
     public UnixUser() {
+    }
+
+    public UnixUser(Long id, String name, String homeFolder, String shell) {
+        this.id = id;
+        this.name = name;
+        this.homeFolder = homeFolder;
+        this.shell = shell;
     }
 
     public UnixUser(Long id, String name, String homeFolder, String shell, String hashedPassword) {
@@ -73,6 +86,10 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
         return name;
     }
 
+    public String getPassword() {
+        return password;
+    }
+
     @Override
     public InfraPluginResourceCategory getResourceCategory() {
         return InfraPluginResourceCategory.INFRASTRUCTURE;
@@ -92,6 +109,10 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
         return shell;
     }
 
+    public boolean isKeepClearPassword() {
+        return keepClearPassword;
+    }
+
     public void setHashedPassword(String hashedPassword) {
         this.hashedPassword = hashedPassword;
     }
@@ -104,8 +125,16 @@ public class UnixUser extends AbstractIPResource implements Comparable<UnixUser>
         this.id = id;
     }
 
+    public void setKeepClearPassword(boolean keepClearPassword) {
+        this.keepClearPassword = keepClearPassword;
+    }
+
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public void setShell(String shell) {

@@ -22,7 +22,7 @@ public class FoilenUnixUserPluginDefinitionProvider implements IPPluginDefinitio
     public IPPluginDefinitionV1 getIPPluginDefinition() {
         IPPluginDefinitionV1 pluginDefinitionV1 = new IPPluginDefinitionV1("Foilen", "Unix User", "To manage unix users", "1.0.0");
 
-        pluginDefinitionV1.addCustomResource(UnixUser.class, "Unix User", //
+        pluginDefinitionV1.addCustomResource(UnixUser.class, UnixUser.RESOURCE_TYPE, //
                 Arrays.asList(UnixUser.PROPERTY_ID), //
                 Arrays.asList( //
                         UnixUser.PROPERTY_NAME, //

@@ -11,6 +11,8 @@ package com.foilen.infra.resource.unixuser;
 
 import java.util.List;
 
+import org.apache.commons.codec.digest.Sha2Crypt;
+
 import com.foilen.infra.plugin.v1.core.context.ChangesContext;
 import com.foilen.infra.plugin.v1.core.context.CommonServicesContext;
 import com.foilen.infra.plugin.v1.core.eventhandler.AbstractUpdateEventHandler;
@@ -18,6 +20,7 @@ import com.foilen.infra.plugin.v1.core.exception.IllegalUpdateException;
 import com.foilen.infra.plugin.v1.core.service.IPResourceService;
 import com.foilen.infra.plugin.v1.model.resource.IPResource;
 import com.foilen.infra.resource.unixuser.helper.UnixUserAvailableIdHelper;
+import com.foilen.smalltools.tools.CharsetTools;
 import com.foilen.smalltools.tools.StringTools;
 import com.foilen.smalltools.tuple.Tuple3;
 
@@ -34,6 +37,8 @@ public class UnixUserUpdateHandler extends AbstractUpdateEventHandler<UnixUser> 
             changes.resourceUpdate(resource.getInternalId(), resource);
         }
 
+        common(services, changes, resource);
+
     }
 
     @Override
@@ -47,6 +52,45 @@ public class UnixUserUpdateHandler extends AbstractUpdateEventHandler<UnixUser> 
         if (unixUsers.size() > 1) {
             throw new IllegalUpdateException("Unix User name " + name + " is already used");
         }
+    }
+
+    private void common(CommonServicesContext services, ChangesContext changes, UnixUser resource) {
+        // Update hashed password and clear the password if requested
+        if (resource.getPassword() != null) {
+
+            boolean updateHash = false;
+
+            if (resource.getHashedPassword() == null) {
+                updateHash = true;
+            } else {
+                // Check if the hashed password is already a right one
+                String expectedHash = Sha2Crypt.sha512Crypt(resource.getPassword().getBytes(CharsetTools.UTF_8), resource.getHashedPassword());
+                if (!StringTools.safeEquals(expectedHash, resource.getHashedPassword())) {
+                    updateHash = true;
+                }
+            }
+            if (updateHash) {
+                resource.setHashedPassword(Sha2Crypt.sha512Crypt(resource.getPassword().getBytes(CharsetTools.UTF_8)));
+                changes.resourceUpdate(resource);
+            }
+
+            // Clear the password if desired
+            if (!resource.isKeepClearPassword()) {
+                resource.setPassword(null);
+                changes.resourceUpdate(resource);
+            }
+        }
+
+        // Set home folder
+        if (resource.getHomeFolder() == null) {
+            resource.setHomeFolder("/home/" + resource.getName());
+        }
+
+        // Set Shell
+        if (resource.getShell() == null) {
+            resource.setShell("/bin/bash");
+        }
+
     }
 
     @Override
@@ -64,6 +108,8 @@ public class UnixUserUpdateHandler extends AbstractUpdateEventHandler<UnixUser> 
         if (!StringTools.safeEquals(previousResource.getName(), newResource.getName())) {
             checkUniqueName(services, newResource.getName());
         }
+
+        common(services, changes, newResource);
     }
 
 }

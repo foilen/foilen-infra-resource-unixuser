@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.apache.commons.codec.digest.Sha2Crypt;
-
 import com.foilen.infra.plugin.v1.core.context.ChangesContext;
 import com.foilen.infra.plugin.v1.core.context.CommonServicesContext;
 import com.foilen.infra.plugin.v1.core.service.IPResourceService;
@@ -30,7 +28,7 @@ import com.foilen.infra.plugin.v1.core.visual.pageItem.field.InputTextFieldPageI
 import com.foilen.infra.plugin.v1.model.resource.LinkTypeConstants;
 import com.foilen.infra.resource.machine.Machine;
 import com.foilen.infra.resource.unixuser.helper.UnixUserAvailableIdHelper;
-import com.foilen.smalltools.tools.CharsetTools;
+import com.foilen.smalltools.tools.StringTools;
 import com.foilen.smalltools.tuple.Tuple2;
 import com.google.common.base.Strings;
 
@@ -49,23 +47,22 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
         if (resource.getId() == null) {
             // Choose id
             resource.setId(UnixUserAvailableIdHelper.getNextAvailableId());
-
-            // Other initial properties
-            String username = validFormValues.get(UnixUser.PROPERTY_NAME);
-            resource.setHomeFolder("/home/" + username);
         }
 
         // Other common properties
         resource.setName(validFormValues.get(UnixUser.PROPERTY_NAME));
+        resource.setKeepClearPassword(Boolean.valueOf(validFormValues.get(UnixUser.PROPERTY_KEEP_CLEAR_PASSWORD)));
 
         // Update password
         String password = validFormValues.get(FIELD_PASSWORD);
         String passwordConf = validFormValues.get(FIELD_PASSWORD_CONF);
         if (Strings.isNullOrEmpty(passwordConf) && CLEAR_PASSWORD_CHAR.equals(password)) {
             // Clear the password
+            resource.setPassword(null);
             resource.setHashedPassword(null);
         } else if (!Strings.isNullOrEmpty(password)) {
-            resource.setHashedPassword(Sha2Crypt.sha512Crypt(password.getBytes(CharsetTools.UTF_8)));
+            // Set the password
+            resource.setPassword(password);
         }
 
         // Update links
@@ -77,6 +74,12 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
     public void formatForm(CommonServicesContext servicesCtx, Map<String, String> rawFormValues) {
         CommonFormatting.trimSpacesAround(rawFormValues, UnixUser.PROPERTY_NAME);
         CommonFormatting.toLowerCase(rawFormValues, UnixUser.PROPERTY_NAME);
+
+        // Keep clear password
+        if (!StringTools.safeEquals(rawFormValues.get(UnixUser.PROPERTY_KEEP_CLEAR_PASSWORD), "true")) {
+            rawFormValues.put(UnixUser.PROPERTY_KEEP_CLEAR_PASSWORD, "false");
+        }
+
     }
 
     @Override
@@ -99,11 +102,20 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
         CommonPageItem.createInputTextField(servicesCtx, pageDefinition, "UnixUserEditor.password", FIELD_PASSWORD).setPassword(true);
         CommonPageItem.createInputTextField(servicesCtx, pageDefinition, "UnixUserEditor.passwordConf", FIELD_PASSWORD_CONF).setPassword(true);
 
+        InputTextFieldPageItem keepClearPassword = CommonPageItem.createInputTextField(servicesCtx, pageDefinition, "UnixUserEditor.keepClearPassword", UnixUser.PROPERTY_KEEP_CLEAR_PASSWORD);
+        keepClearPassword.setFieldValue("false");
+
         if (resource != null) {
             namePageItem.setFieldValue(resource.getName());
+            keepClearPassword.setFieldValue(String.valueOf(resource.isKeepClearPassword()));
         }
 
         CommonResourceLink.addResourcesPageItem(servicesCtx, pageDefinition, resource, LinkTypeConstants.INSTALLED_ON, Machine.class, "UnixUserEditor.machines", LINK_INSTALLED_ON);
+
+        // Label: current password
+        if (resource != null && resource.getPassword() != null) {
+            pageDefinition.addPageItem(new LabelPageItem().setText(translationService.translate("UnixUserEditor.visiblePassword", resource.getPassword())));
+        }
 
         return pageDefinition;
 
@@ -113,8 +125,9 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
     public List<Tuple2<String, String>> validateForm(CommonServicesContext servicesCtx, Map<String, String> rawFormValues) {
 
         List<Tuple2<String, String>> errors = CommonValidation.validateNotNullOrEmpty(rawFormValues, UnixUser.PROPERTY_NAME);
-        // If new name or changing name, make sure no collision
         if (errors.isEmpty()) {
+
+            // If new name or changing name, make sure no collision
             IPResourceService resourceService = servicesCtx.getResourceService();
             String username = rawFormValues.get(UnixUser.PROPERTY_NAME);
             Optional<UnixUser> unixUser = resourceService.resourceFind(resourceService.createResourceQuery(UnixUser.class) //
@@ -133,6 +146,7 @@ public class UnixUserEditor implements ResourceEditor<UnixUser> {
                     errors.add(new Tuple2<>(UnixUser.PROPERTY_NAME, "error.nameTaken"));
                 }
             }
+
         }
 
         // Password are confirmed
