@@ -84,11 +84,13 @@ public class UnixUserUpdateHandler extends AbstractUpdateEventHandler<UnixUser> 
         // Set home folder
         if (resource.getHomeFolder() == null) {
             resource.setHomeFolder("/home/" + resource.getName());
+            changes.resourceUpdate(resource);
         }
 
         // Set Shell
         if (resource.getShell() == null) {
             resource.setShell("/bin/bash");
+            changes.resourceUpdate(resource);
         }
 
     }
