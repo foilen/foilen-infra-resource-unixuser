@@ -14,6 +14,8 @@ import org.junit.Test;
 
 import com.foilen.infra.plugin.core.system.fake.junits.AbstractIPPluginTest;
 import com.foilen.infra.plugin.v1.core.context.ChangesContext;
+import com.foilen.infra.plugin.v1.core.exception.IllegalUpdateException;
+import com.foilen.infra.plugin.v1.core.exception.ResourcePrimaryKeyCollisionException;
 import com.foilen.infra.plugin.v1.core.service.IPResourceService;
 
 public class UnixUserUpdateHandlerTest extends AbstractIPPluginTest {
@@ -21,6 +23,67 @@ public class UnixUserUpdateHandlerTest extends AbstractIPPluginTest {
     private UnixUser findUnixUser(String name) {
         IPResourceService resourceService = getCommonServicesContext().getResourceService();
         return resourceService.resourceFind(resourceService.createResourceQuery(UnixUser.class).propertyEquals(UnixUser.PROPERTY_NAME, name)).orElse(null);
+    }
+
+    @Test(expected = IllegalUpdateException.class)
+    public void testCreatingLowerId_FAIL() {
+
+        // User
+        UnixUser unixUser = new UnixUser();
+        unixUser.setId(60000L);
+        unixUser.setName("the_user");
+        unixUser.setPassword("the_password");
+        unixUser.setKeepClearPassword(false);
+
+        // Add
+        ChangesContext changes = new ChangesContext(getCommonServicesContext().getResourceService());
+        changes.resourceAdd(unixUser);
+        getInternalServicesContext().getInternalChangeService().changesExecute(changes);
+
+    }
+
+    @Test
+    public void testCreatingWithId_OK() {
+
+        // User
+        UnixUser unixUser = new UnixUser();
+        unixUser.setId(70120L);
+        unixUser.setName("the_user");
+        unixUser.setPassword("the_password");
+        unixUser.setKeepClearPassword(false);
+
+        // Add
+        ChangesContext changes = new ChangesContext(getCommonServicesContext().getResourceService());
+        changes.resourceAdd(unixUser);
+        getInternalServicesContext().getInternalChangeService().changesExecute(changes);
+
+        // Assert
+        UnixUser actual = findUnixUser("the_user");
+        Assert.assertEquals(70120L, (long) actual.getId());
+        Assert.assertEquals("the_user", actual.getName());
+        Assert.assertEquals("/home/the_user", actual.getHomeFolder());
+        Assert.assertNull(actual.getPassword());
+        Assert.assertFalse(actual.isKeepClearPassword());
+        Assert.assertNotNull(actual.getHashedPassword());
+        Assert.assertEquals("/bin/bash", actual.getShell());
+
+    }
+
+    @Test(expected = ResourcePrimaryKeyCollisionException.class)
+    public void testCreatingWithIdExisting_FAIL() {
+
+        testCreatingWithId_OK();
+
+        // User
+        UnixUser unixUser = new UnixUser();
+        unixUser.setId(70120L);
+        unixUser.setName("the_user_2");
+
+        // Add
+        ChangesContext changes = new ChangesContext(getCommonServicesContext().getResourceService());
+        changes.resourceAdd(unixUser);
+        getInternalServicesContext().getInternalChangeService().changesExecute(changes);
+
     }
 
     @Test

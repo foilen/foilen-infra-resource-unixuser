@@ -93,6 +93,11 @@ public class UnixUserUpdateHandler extends AbstractUpdateEventHandler<UnixUser> 
             changes.resourceUpdate(resource);
         }
 
+        // Validate id is high enough
+        if (resource.getId() < 70000L) {
+            throw new IllegalUpdateException("Id is lower than 70000. It is " + resource.getId());
+        }
+
     }
 
     @Override
