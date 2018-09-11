@@ -29,11 +29,20 @@ public class FoilenUnixUserPluginDefinitionProvider implements IPPluginDefinitio
                         UnixUser.PROPERTY_HOME_FOLDER, //
                         UnixUser.PROPERTY_SHELL //
                 ));
+        pluginDefinitionV1.addCustomResource(SystemUnixUser.class, SystemUnixUser.RESOURCE_TYPE, //
+                Arrays.asList(UnixUser.PROPERTY_ID), //
+                Arrays.asList( //
+                        UnixUser.PROPERTY_NAME, //
+                        UnixUser.PROPERTY_HOME_FOLDER, //
+                        UnixUser.PROPERTY_SHELL //
+                ));
 
         pluginDefinitionV1.addTranslations("/com/foilen/infra/resource/unixuser/messages");
         pluginDefinitionV1.addResourceEditor(new UnixUserEditor(), UnixUserEditor.EDITOR_NAME);
+        pluginDefinitionV1.addResourceEditor(new SystemUnixUserEditor(), SystemUnixUserEditor.EDITOR_NAME);
 
         pluginDefinitionV1.addUpdateHandler(new UnixUserUpdateHandler());
+        pluginDefinitionV1.addUpdateHandler(new SystemUnixUserUpdateHandler());
 
         return pluginDefinitionV1;
     }

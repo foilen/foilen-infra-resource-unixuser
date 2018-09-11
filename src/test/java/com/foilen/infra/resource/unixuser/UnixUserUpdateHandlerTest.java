@@ -42,6 +42,49 @@ public class UnixUserUpdateHandlerTest extends AbstractIPPluginTest {
 
     }
 
+    @Test(expected = IllegalUpdateException.class)
+    public void testCreatingSystemHigherId_FAIL() {
+
+        // User
+        SystemUnixUser unixUser = new SystemUnixUser();
+        unixUser.setId(71000L);
+        unixUser.setName("the_user");
+        unixUser.setPassword("the_password");
+        unixUser.setKeepClearPassword(false);
+
+        // Add
+        ChangesContext changes = new ChangesContext(getCommonServicesContext().getResourceService());
+        changes.resourceAdd(unixUser);
+        getInternalServicesContext().getInternalChangeService().changesExecute(changes);
+
+    }
+
+    @Test
+    public void testCreatingSystemLowerId_OK() {
+
+        // User
+        SystemUnixUser unixUser = new SystemUnixUser();
+        unixUser.setId(0L);
+        unixUser.setName("root");
+        unixUser.setHomeFolder("/root");
+
+        // Add
+        ChangesContext changes = new ChangesContext(getCommonServicesContext().getResourceService());
+        changes.resourceAdd(unixUser);
+        getInternalServicesContext().getInternalChangeService().changesExecute(changes);
+
+        // Assert
+        UnixUser actual = findUnixUser("root");
+        Assert.assertEquals(0L, (long) actual.getId());
+        Assert.assertEquals("root", actual.getName());
+        Assert.assertEquals("/root", actual.getHomeFolder());
+        Assert.assertNull(actual.getPassword());
+        Assert.assertFalse(actual.isKeepClearPassword());
+        Assert.assertNull(actual.getHashedPassword());
+        Assert.assertEquals("/bin/bash", actual.getShell());
+
+    }
+
     @Test
     public void testCreatingWithId_OK() {
 
